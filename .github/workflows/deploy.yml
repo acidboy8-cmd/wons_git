@@ -1,0 +1,18 @@
+name: deploy-log
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  log:
+    if: github.actor != 'deploy-bot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Save deploy log
+        run: |
+          [ -f DEPLOY_LOG.md ] || printf '# 배포 기록\n\n| 시각 | 커밋 | 변경 내용 |\n|---|---|---|\n' > DEPLOY_LOG.md
+          echo "| $(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M KST') | ${GITHUB_SHA::7} | $(git log -1 --pretty=%s | tr '|' '/') |" >> DEPLOY_LOG.md
+          git config user.name "deploy-bot"; git config user.email "deploy-bot@users.noreply.github.com"
+          git add DEPLOY_LOG.md; git commit -m "chore: deploy log" && git push
